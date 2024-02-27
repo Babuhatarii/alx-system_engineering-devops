@@ -1,41 +1,28 @@
-# This manifest is used to configure nginx web server during installation
+# puppet manifest to configure the web server
+exec { 'dist update':
+        command  => '/usr/bin/apt-get update',
+        provider => 'shell'
+}
+
 package { 'nginx':
-    ensure => 'installed',
+  ensure  => 'installed',
+  require => Exec['dist update']
 }
 
-exec {'install':
-    command  => 'sudo apt-get update ; sudo apt-get -y install nginx',
-    provider => shell,
-}
-service { 'nginx':
-    ensure  => 'running',
-    enable  => true,
-    require => Package['nginx'],
+file {'/var/www/html/index.html':
+  path    => '/var/www/html/index.html',
+  content => 'Hello World!',
+  owner   => 'ubuntu',
+  group   => 'ubuntu',
+  mode    => '7624'
 }
 
-file {'/etc/nginx/sites-available/default':
-    ensure  => 'file',
-    content => '
-       server {
-           listen 80;
-           listen [::]:80 default_server;
-           root /etc/nginx/html;
-           index.html index.htm;
-       
-            location /redirect_me {
-                return 301 https://www.youtube.com/watch?v=QH2-TGUlwu4;
-            }
-        }
-    ',
-    require => Package['nginx'],
-    notify  => Service['nginx']
-}
-file {'/etc/nginx/html/index.html':
-    ensure  => 'file',
-    content => 'Hello World',
+exec {'redirect_me':
+  command  => 'sed -i "24i\	rewrite ^/redirect_me https://www.youtube.com/watch?v=QH2-TGUlwu4 permanent;" /etc/nginx/sites-available/default',
+  provider => 'shell'
 }
 
-exec {'run':
-    command  => 'sudo service nginx restart',
-    provider => shell,
+service {'nginx':
+  ensure  => running,
+  require => Package['nginx']
 }
