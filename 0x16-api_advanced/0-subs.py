@@ -7,6 +7,7 @@ import requests
 
 
 def number_of_subscribers(subreddit):
+    # Defines the url
     url = f'https://www.reddit.com/r/{subreddit}/about.json'
 
     # Set's a custom User-Agent to avoid "Too Many Requests" errors
